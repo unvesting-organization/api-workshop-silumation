@@ -18,8 +18,6 @@ def retrieve_and_process_data(password: str, time: int):
         price_history.loc[0, company] = base_price
         factors = market_factors[market_factors['company'] == company].set_index('time').sort_index()
         for time in times:
-            if time == 0:
-                continue
             change_pct = factors.loc[time, 'change'] 
             price += change_pct
             price_history.loc[time, company] = round(price, 2)
@@ -44,10 +42,10 @@ def retrieve_and_process_data(password: str, time: int):
             moment = row['Momento']
             choices = [row['Empresa a Invertir'], row['Empresa 2 a Invertir']]
             choices = [choice if choice != '' else 'Ninguna' for choice in choices]
-            time = int(moment) - 1 if int(moment) > 0 else 0
+            time = int(moment)
 
             # Update holdings based on choices
-            portfolio = update_portfolio(portfolio, choices, price_history.loc[time], price_history.loc[time + 1])
+            portfolio = update_portfolio(portfolio, choices, price_history.loc[time-1])
 
             # Record portfolio value
             total_value = portfolio['cash']
@@ -59,7 +57,7 @@ def retrieve_and_process_data(password: str, time: int):
 
     return user_portfolios
 
-def update_portfolio(portfolio, choices, current_prices, next_prices):
+def update_portfolio(portfolio, choices, current_prices):
     # Define the investment logic
     selected_companies = [choice for choice in choices if choice not in ['Ninguna', 'Freeze', '']]
     num_selected = len(selected_companies)
@@ -81,15 +79,17 @@ def update_portfolio(portfolio, choices, current_prices, next_prices):
     for company, action in actions.items():
         if action == 'sell':
             shares = portfolio['holdings'].pop(company, 0)
-            portfolio['cash'] += shares * next_prices[company]
+            next_price = current_prices[company]
+            portfolio['cash'] += shares * next_price
 
     # Buy
     if num_selected > 0:
-        invest_per_company = portfolio['cash'] / num_selected
+        aux = sum([1 for action in actions.values() if action == 'sell'])
+        invest_per_company = portfolio['cash'] / (num_selected-aux)
         portfolio['cash'] = 0
         for company in selected_companies:
             if actions.get(company) == 'buy':
-                price = next_prices[company]
+                price = current_prices[company]
                 shares = invest_per_company / price
                 portfolio['holdings'][company] = shares
             elif actions.get(company) == 'hold':
