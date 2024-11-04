@@ -24,8 +24,8 @@ def update_portfolio(portfolio, choices, current_prices):
             portfolio['cash'] += shares * next_price
 
     # Buy
-    if num_selected > 0:
-        aux = sum([1 for action in actions.values() if action == 'sell'])
+    aux = sum([1 for action in actions.values() if action == 'sell'])
+    if num_selected > 0 and aux < num_selected:
         invest_per_company = portfolio['cash'] / (num_selected-aux)
         portfolio['cash'] = 0
         for company in selected_companies:

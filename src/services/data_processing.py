@@ -1,28 +1,11 @@
 import pandas as pd
 import os
 from src.services.decision_user_portfolio import update_portfolio
+from src.services.company_information import companies_data
 
 def retrieve_and_process_data(password: str, time: int):
     try:
-        market_base = pd.read_csv("src/docs/market_base.csv")
-        market_base.set_index('name', inplace=True)
-
-        market_factors = pd.read_csv("src/docs/market_factors.csv")
-
-        # Compute company prices over time
-        companies = market_base.index.tolist()
-        times = sorted(market_factors['time'].unique())
-        price_history = pd.DataFrame(index=times, columns=companies)
-
-        for company in companies:
-            base_price = market_base.loc[company, 'cost']
-            price = base_price
-            price_history.loc[0, company] = base_price
-            factors = market_factors[market_factors['company'] == company].set_index('time').sort_index()
-            for time in times:
-                change_pct = factors.loc[time, 'change'] 
-                price += change_pct
-                price_history.loc[time, company] = round(price, 2)
+        market_base = companies_data(time)
 
         # Define user responses
         sheet_id = os.getenv("USER_DECISIONS_DATA")
