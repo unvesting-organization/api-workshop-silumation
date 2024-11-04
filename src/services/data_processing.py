@@ -2,6 +2,7 @@ import pandas as pd
 import os
 from src.services.decision_user_portfolio import update_portfolio
 from src.services.company_information import companies_data
+from src.services.simulate_broker import simulate_broker, rank_users
 
 def retrieve_and_process_data(password: str, time: int):
     try:
@@ -16,7 +17,7 @@ def retrieve_and_process_data(password: str, time: int):
             
         users_responses = pd.read_csv(f"https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=csv")
         users_responses = users_responses[(users_responses["Contraseña"] == password) & (users_responses["Momento"] <= time)]
-        users_responses.fillna('', inplace=True)
+        users_responses.dropna()
         users_responses.sort_values(by=['Nombre Usuario', 'Momento'], inplace=True)
 
         transactions = []
@@ -34,7 +35,8 @@ def retrieve_and_process_data(password: str, time: int):
         
         if not os.path.exists(f'{password}_participants.csv'):
             pd.DataFrame(transactions).to_csv(f'{password}_participants.csv', index=False)
-        return transactions
+        
+        historial, portafolios = simulate_broker(transactions, { company["Nombre"] : company["Valor"] for company in market_base})
+        return rank_users(portafolios)
     except Exception as e:
-        print(e)
         raise e
