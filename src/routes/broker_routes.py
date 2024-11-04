@@ -39,3 +39,15 @@ async def business_data(time: int = Query(...)):
         return results
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+    
+@router.get("/video")
+async def video(time : int = Query(...)):
+    """
+    Get the video link.
+    """
+    content = {
+        1: "https://www.youtube.com/watch?v=1",
+        2: "https://www.youtube.com/watch?v=2",
+        3: "https://www.youtube.com/watch?v=3",
+    }
+    return content[time]
