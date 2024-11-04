@@ -7,7 +7,6 @@ class Transaction:
     user_id: str
     stock_symbol: str
     type: str  # 'buy', 'sell', 'hold'
-    quantity: int
 
 def update_price(current_price: float, transaction_type: str, quantity: int,
                 buy_factor: float = 0.01, sell_factor: float = 0.01) -> float:
