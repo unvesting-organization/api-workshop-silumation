@@ -1,4 +1,5 @@
 import pandas as pd
+import os
 
 def retrieve_and_process_data(password: str, time: int):
 
@@ -23,7 +24,7 @@ def retrieve_and_process_data(password: str, time: int):
             price_history.loc[time, company] = round(price, 2)
 
     # Define user responses
-    sheet_id = "1yurPkKC-0LugxxS11mmXOP6fRp0ceVZ5LvwzqzQ79m0"
+    sheet_id = os.getenv("USER_DECISIONS_DATA")
 
     users_responses = pd.read_csv(f"https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=csv")
     users_responses = users_responses[(users_responses["Contraseña"] == password) & (users_responses["Momento"] <= time)]
