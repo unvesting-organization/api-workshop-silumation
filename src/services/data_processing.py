@@ -5,10 +5,12 @@ from src.services.company_information import companies_data
 from src.services.simulate_broker import simulate_broker
 from src.services.rank_users import rank_users
 from src.utils.mongo_utils import MongoUtils
+from src.services.changes_company_shares import changes_shares
 
 async def retrieve_and_process_data(password: str, time: int):
     try:
         market_base = await companies_data(password, time-1)
+        changes_shares_values = changes_shares(time)
 
         # Define user responses
         sheet_id = os.getenv("USER_DECISIONS_DATA")
@@ -25,7 +27,7 @@ async def retrieve_and_process_data(password: str, time: int):
         transactions = []
         for user in users_responses['Nombre Usuario'].unique():
             user_data = users_responses[users_responses['Nombre Usuario'] == user].sort_values(by='Momento')
-            portfolio = {'cash': 1000, 'holdings': {}, 'history': {}}
+            portfolio = {'holdings': {}, 'history': {}}
 
             for idx, row in user_data.iterrows():
                 date = row['Marca temporal']
@@ -35,7 +37,8 @@ async def retrieve_and_process_data(password: str, time: int):
                 portfolio = update_portfolio(user, portfolio, date, choices)
                 transactions += portfolio
         
-        market_base_lite = { company["Nombre"] : company["Valor"] for company in market_base}
+        market_base_lite = { company["Nombre"] : company["Valor"] + changes_shares_values["Nombre"] for company in market_base}
+
         current_prices, portafolios = simulate_broker(transactions, market_base_lite)
         await MongoUtils.insert_many_portfolios(f"{password}_portfolios", portafolios)
 
