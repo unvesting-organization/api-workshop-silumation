@@ -79,7 +79,8 @@ class MongoUtils:
     @classmethod
     async def insert_many_portfolios(cls, collection: str, portfolios: Dict[str, Any]) -> List[ObjectId]:
         """
-        Inserts multiple portfolio documents into the specified collection.
+        Inserts multiple portfolio documents into the specified collection without introducing duplicates.
+        If a document with the same 'user_id' exists, it updates the 'balance' and 'holdings' fields.
 
         :param collection: The name of the collection.
         :param portfolios: A dictionary where the key is the user_id and the value is a portfolio object.
@@ -90,26 +91,29 @@ class MongoUtils:
             logger.warning('No portfolios to insert.')
             return []
 
-        # Convert portfolio objects to dictionaries
-        def serialize_portfolios(portfolios):
-            result = []
-            for user_id, portfolio in portfolios.items():
-                aux = {
-                    "user_id": user_id,
-                    'balance': portfolio.balance,
-                    'holdings': dict(portfolio.holdings)  # Convert defaultdict to dict
-                }
-                result.append(aux)
-            return result
+        operations = []
+        for user_id, portfolio in portfolios.items():
+            aux = {
+                'balance': portfolio.balance,
+                'holdings': dict(portfolio.holdings)
+            }
+            operations.append(
+                UpdateOne(
+                    {'user_id': user_id},
+                    {'$set': aux},
+                    upsert=True
+                )
+            )
 
-        documents = serialize_portfolios(portfolios)
         try:
-            result = cls.db[collection].insert_many(documents)
-            logger.debug(f'{len(result.inserted_ids)} portfolios inserted into "{collection}".')
-            return result.inserted_ids
+            result = cls.db[collection].bulk_write(operations)
+            logger.debug(f'{result.upserted_count} portfolios inserted and {result.modified_count} portfolios updated in "{collection}".')
+            inserted_ids = list(result.upserted_ids.values())
+            return inserted_ids
         except Exception as e:
-            logger.error('Failed to insert portfolios.', exc_info=e)
+            logger.error('Failed to insert or update portfolios.', exc_info=e)
             return []
+
 
     @classmethod
     async def insert_many_companies(cls, collection: str, companies: List[Dict], exception : str = None) -> List[ObjectId]:
@@ -134,7 +138,6 @@ class MongoUtils:
             inserted_count = result.upserted_count
             modified_count = result.modified_count
             logger.debug(f'{inserted_count} companies inserted and {modified_count} companies updated in "{collection}".')
-            return [op.upserted_id for op in result.upserted_ids] if result.upserted_ids else []
         except errors.BulkWriteError as e:
             logger.error('Failed to insert or update companies.', exc_info=e)
             return []
