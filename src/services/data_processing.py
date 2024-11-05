@@ -2,7 +2,8 @@ import pandas as pd
 import os
 from src.services.decision_user_portfolio import update_portfolio
 from src.services.company_information import companies_data
-from src.services.simulate_broker import simulate_broker, rank_users
+from src.services.simulate_broker import simulate_broker
+from src.services.rank_users import rank_users
 
 def retrieve_and_process_data(password: str, time: int):
     try:
@@ -30,13 +31,14 @@ def retrieve_and_process_data(password: str, time: int):
                 choices = [row['Empresa a Invertir'], row['Empresa 2 a Invertir']]
 
                 # Update holdings based on choices
-                portfolio = update_portfolio(users_responses['Nombre Usuario'], portfolio, date, choices, current_prices)
+                portfolio = update_portfolio(user, portfolio, date, choices)
                 transactions += portfolio
         
         if not os.path.exists(f'{password}_participants.csv'):
             pd.DataFrame(transactions).to_csv(f'{password}_participants.csv', index=False)
         
-        historial, portafolios = simulate_broker(transactions, { company["Nombre"] : company["Valor"] for company in market_base})
+        market_base = { company["Nombre"] : company["Valor"] for company in market_base}
+        historial, portafolios = simulate_broker(transactions, market_base)
         return rank_users(portafolios)
     except Exception as e:
         raise e

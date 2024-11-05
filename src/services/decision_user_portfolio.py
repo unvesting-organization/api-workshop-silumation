@@ -1,9 +1,9 @@
 from src.models.transaction import Transaction
+from datetime import  datetime
 
-def update_portfolio(name, portfolio, date, choices, current_prices):
+def update_portfolio(name, portfolio, date, choices):
     # Define the investment logic
     selected_companies = [choice for choice in choices if choice not in ['Ninguna', 'Freeze', '']]
-    num_selected = len(selected_companies)
 
     # Determine actions
     actions = {}
@@ -17,4 +17,4 @@ def update_portfolio(name, portfolio, date, choices, current_prices):
         if company not in portfolio['holdings']:
             actions[company] = 'buy'
 
-    return [ Transaction(date, name, company, action) for company, action in actions.items()]
+    return [ Transaction(datetime.strptime(date, "%d/%m/%Y %H:%M:%S"), name, company, action) for company, action in actions.items()]

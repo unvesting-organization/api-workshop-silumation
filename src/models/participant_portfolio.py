@@ -5,4 +5,4 @@ from collections import defaultdict
 @dataclass
 class UserPortfolio:
     balance: float
-    holdings: Dict[str, int] = field(default_factory=lambda: defaultdict(int))
+    holdings: Dict[str, int] = field(default_factory=dict)
