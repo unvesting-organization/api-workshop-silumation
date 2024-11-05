@@ -30,12 +30,12 @@ async def business_data(time: int = Query(...)):
         raise HTTPException(status_code=500, detail=str(e))
     
 @router.get("/companies_data")
-async def business_data(time: int = Query(...)):
+async def business_data():
     """
     Process companies data for a given time.
     """
     try:
-        results = companies_data(time)
+        results = companies_data()
         return results
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
