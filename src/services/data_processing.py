@@ -7,7 +7,7 @@ from src.services.rank_users import rank_users
 
 def retrieve_and_process_data(password: str, time: int):
     try:
-        market_base = companies_data(time)
+        market_base = companies_data()
 
         # Define user responses
         sheet_id = os.getenv("USER_DECISIONS_DATA")
@@ -37,8 +37,13 @@ def retrieve_and_process_data(password: str, time: int):
         if not os.path.exists(f'{password}_participants.csv'):
             pd.DataFrame(transactions).to_csv(f'{password}_participants.csv', index=False)
         
-        market_base = { company["Nombre"] : company["Valor"] for company in market_base}
-        current_prices, portafolios = simulate_broker(transactions, market_base)
-        return rank_users(portafolios, current_prices)
+        market_base_lite = { company["Nombre"] : company["Valor"] for company in market_base}
+        current_prices, portafolios = simulate_broker(transactions, market_base_lite)
+        ranking = rank_users(portafolios, current_prices)
+        merged = [{**empresa, 'Valor': current_prices[empresa['Nombre']]} for empresa in market_base]
+        return {
+            'current_prices_companies': merged,
+            'ranking': ranking
+        }
     except Exception as e:
         raise e
