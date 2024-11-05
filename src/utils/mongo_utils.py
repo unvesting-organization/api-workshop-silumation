@@ -3,7 +3,7 @@ import logging
 from pymongo import MongoClient
 from bson import ObjectId
 from typing import Any, Dict, List, Optional
-import json
+from src.helpers.exceptions.mongo_exception import MongoDBException
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -30,8 +30,8 @@ class MongoUtils:
                 cls.db = cls.client[database_name]
                 logger.info('Connected to MongoDB')
             except Exception as err:
-                logger.error('Failed to connect to MongoDB', exc_info=err)
-                raise err
+                logger.error('Failed to connect to MongoDB')
+                MongoDBException(err)
 
     @classmethod
     async def create_collection(cls, collection_name: str, **kwargs) -> None:
@@ -53,7 +53,7 @@ class MongoUtils:
             logger.info(f'Collection "{collection_name}" created successfully.')
         except Exception as e:
             logger.error(f'Failed to create collection "{collection_name}".', exc_info=e)
-            raise e
+            raise MongoDBException(e)
 
     @classmethod
     async def collection_exists(cls, collection_name: str) -> bool:
