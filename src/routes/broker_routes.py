@@ -17,14 +17,13 @@ async def process_data(key: str = Query(...), time: int = Query(...)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-
 @router.get("/companies_data")
-async def business_data():
+async def business_data(key: str = Query(...), time: int = Query(...)):
     """
     Process companies data for a given time.
     """
     try:
-        results = companies_data()
+        results = companies_data(key, time)
         return results
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
