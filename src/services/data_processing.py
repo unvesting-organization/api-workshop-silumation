@@ -4,17 +4,19 @@ from src.services.decision_user_portfolio import update_portfolio
 from src.services.company_information import companies_data
 from src.services.simulate_broker import simulate_broker
 from src.services.rank_users import rank_users
+from src.utils.mongo_utils import MongoUtils
 
-def retrieve_and_process_data(password: str, time: int):
+async def retrieve_and_process_data(password: str, time: int):
     try:
-        market_base = companies_data(password, time)
+        market_base = await companies_data(password, time-1)
 
         # Define user responses
         sheet_id = os.getenv("USER_DECISIONS_DATA")
-        if not os.path.exists(f'{password}.csv'):
-            pd.DataFrame(market_base)[['Nombre', 'Valor']].to_csv(f'{password}.csv', index=False)
-        # Convert the file to a pandas dataframe
-        current_prices = pd.read_csv(f'{password}.csv')
+
+        await MongoUtils.create_collection(f"{password}_portfolios")
+        await MongoUtils.create_collection(f"{password}_company_{time}")
+
+        current_prices = [{'Nombre': item['Nombre'], 'Valor': item['Valor']} for item in market_base]
             
         users_responses = pd.read_csv(f"https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=csv")
         users_responses = users_responses[(users_responses["Contraseña"] == password) & (users_responses["Momento"] <= time)]
@@ -34,14 +36,13 @@ def retrieve_and_process_data(password: str, time: int):
                 portfolio = update_portfolio(user, portfolio, date, choices)
                 transactions += portfolio
         
-        if not os.path.exists(f'{password}_participants.csv'):
-            pd.DataFrame(transactions).to_csv(f'{password}_participants.csv', index=False)
-        
         market_base_lite = { company["Nombre"] : company["Valor"] for company in market_base}
         current_prices, portafolios = simulate_broker(transactions, market_base_lite)
+        await MongoUtils.insert_many_portfolios(f"{password}_portfolios", portafolios)
+
         ranking = rank_users(portafolios, current_prices)
         merged = [{**empresa, 'Valor': current_prices[empresa['Nombre']]} for empresa in market_base]
-        pd.DataFrame(merged).to_csv(f'{password}_company.csv', index=False)
+        await MongoUtils.insert_many_companies(f"{password}_company_{time}", merged)
         return ranking
     except Exception as e:
         raise e

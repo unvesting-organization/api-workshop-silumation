@@ -12,7 +12,7 @@ async def process_data(key: str = Query(...), time: int = Query(...)):
     Process data for a given key and time.
     """
     try:
-        results = retrieve_and_process_data(key, time)
+        results = await retrieve_and_process_data(key, time)
         return results
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -23,7 +23,7 @@ async def business_data(key: str = Query(...), time: int = Query(...)):
     Process companies data for a given time.
     """
     try:
-        results = companies_data(key, time)
+        results = await companies_data(key, time)
         return results
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

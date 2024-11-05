@@ -1,8 +1,10 @@
 import os
 import logging
-from motor.motor_asyncio import AsyncIOMotorClient, ReturnDocument
+from motor.motor_asyncio import AsyncIOMotorClient
 from bson import ObjectId
 from typing import Any, Dict, List, Optional
+from pymongo import UpdateOne
+import json
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -31,7 +33,7 @@ class MongoUtils:
             except Exception as err:
                 logger.error('Failed to connect to MongoDB', exc_info=err)
                 raise err
-            
+
     @classmethod
     async def create_collection(cls, collection_name: str, **kwargs) -> None:
         """
@@ -45,7 +47,7 @@ class MongoUtils:
         existing_collections = await cls.db.list_collection_names()
         if collection_name in existing_collections:
             logger.warning(f'Collection "{collection_name}" already exists.')
-            raise ValueError(f'Collection "{collection_name}" already exists.')
+            return
 
         try:
             await cls.db.create_collection(collection_name, **kwargs)
@@ -54,6 +56,19 @@ class MongoUtils:
             logger.error(f'Failed to create collection "{collection_name}".', exc_info=e)
             raise e
 
+    @classmethod
+    async def collection_exists(cls, collection_name: str) -> bool:
+        """
+        Checks if a collection exists in the database.
+
+        :param collection_name: Name of the collection to check.
+        :return: True if the collection exists, False otherwise.
+        """
+        await cls.connect()
+        existing_collections = await cls.db.list_collection_names()
+        exists = collection_name in existing_collections
+        logger.debug(f'Collection "{collection_name}" exists: {exists}')
+        return exists
 
     @classmethod
     async def insert_document(cls, collection: str, document: Dict) -> ObjectId:
@@ -63,105 +78,66 @@ class MongoUtils:
         return result.inserted_id
 
     @classmethod
+    async def insert_many_portfolios(cls, collection: str, documents: List[Dict]) -> List[ObjectId]:
+        await cls.connect()
+        if not documents:
+            logger.warning('No documents to insert.')
+            return []
+        # Convert UserPortfolio objects to dictionaries if necessary
+        def serialize_documents(documents):
+            result = []
+            for key, portfolio in documents.items():
+                aux = {
+                    "user_id": key,
+                    'balance': portfolio.balance,
+                    'holdings': dict(portfolio.holdings)  # Convertimos defaultdict a un dict
+                }
+                result.append(aux)
+            return result
+        
+        json_data = serialize_documents(documents)
+        try:
+            result = await cls.db[collection].insert_many(json_data)
+        except Exception as e:
+            logger.error('Failed to insert documents duplicate')
+            return
+        logger.debug(f'{len(result.inserted_ids)} documents inserted into "{collection}".')
+        return result.inserted_ids
+
+    @classmethod
+    async def insert_many_companies(cls, collection: str, documents: List[Dict]) -> None:
+        await cls.connect()
+        try:
+            result = await cls.db[collection].insert_many(documents)
+        except Exception as e:
+            logger.error('Failed to insert documents duplicate')
+            return
+        logger.debug(f'{len(result.inserted_ids)} documents inserted into "{collection}".')
+        return result.inserted_ids
+
+    @classmethod
     async def find_document(cls, collection: str, query: Dict) -> List[Dict]:
         await cls.connect()
         cursor = cls.db[collection].find(query)
         documents = await cursor.to_list(length=None)
-        logger.debug(f'Found {len(documents)} documents matching query.')
+        logger.debug(f'Found {len(documents)} documents matching query in "{collection}".')
         return documents
-
-    @classmethod
-    async def update_document(cls, collection: str, query: Dict, update_values: Dict) -> Optional[Dict]:
-        await cls.connect()
-        result = await cls.db[collection].find_one_and_update(
-            query,
-            {'$set': update_values},
-            return_document=ReturnDocument.AFTER
-        )
-        if result:
-            logger.debug(f'Document with _id: {result["_id"]} updated.')
-        else:
-            logger.debug('No document found to update.')
-        return result
 
     @classmethod
     async def delete_document(cls, collection: str, query: Dict) -> int:
         await cls.connect()
         result = await cls.db[collection].delete_many(query)
-        logger.debug(f'Deleted {result.deleted_count} documents.')
+        logger.debug(f'Deleted {result.deleted_count} documents from "{collection}".')
         return result.deleted_count
 
-async def insert_json(collection: str, data: Dict) -> str:
-    """
-    Inserts a JSON document into the specified collection.
+    @classmethod
+    async def list_collections(cls) -> List[str]:
+        """
+        Lists all collection names in the database.
 
-    :param collection: Name of the MongoDB collection.
-    :param data: The JSON document to insert.
-    :return: The string representation of the inserted document's _id.
-    """
-    inserted_id = await MongoUtils.insert_document(collection, data)
-    return str(inserted_id)
-
-async def get_json(collection: str, id: str) -> Optional[Dict]:
-    """
-    Retrieves a JSON document by its _id from the specified collection.
-
-    :param collection: Name of the MongoDB collection.
-    :param id: The string representation of the document's _id.
-    :return: The JSON document if found, else None.
-    """
-    try:
-        object_id = ObjectId(id)
-    except Exception as e:
-        logger.error(f'Invalid ObjectId format: {id}', exc_info=e)
-        return None
-
-    query = {'_id': object_id}
-    documents = await MongoUtils.find_document(collection, query)
-    if documents:
-        documents[0]['_id'] = str(documents[0]['_id'])  # Convert ObjectId to string
-        return documents[0]
-    return None
-
-async def update_json(collection: str, id: str, data: Dict) -> str:
-    """
-    Updates a JSON document by its _id in the specified collection.
-
-    :param collection: Name of the MongoDB collection.
-    :param id: The string representation of the document's _id.
-    :param data: The data to update in the document.
-    :return: The string representation of the updated document's _id.
-    :raises ValueError: If the document is not found or update fails.
-    """
-    try:
-        object_id = ObjectId(id)
-    except Exception as e:
-        logger.error(f'Invalid ObjectId format: {id}', exc_info=e)
-        raise ValueError('Invalid ObjectId') from e
-
-    query = {'_id': object_id}
-    updated_document = await MongoUtils.update_document(collection, query, data)
-    if not updated_document:
-        logger.error('Document not found or update failed.')
-        raise ValueError('Document not found or update failed.')
-    return str(updated_document['_id'])
-
-async def delete_json(collection: str, id: str) -> None:
-    """
-    Deletes a JSON document by its _id from the specified collection.
-
-    :param collection: Name of the MongoDB collection.
-    :param id: The string representation of the document's _id.
-    :raises ValueError: If the ObjectId is invalid.
-    """
-    try:
-        object_id = ObjectId(id)
-    except Exception as e:
-        logger.error(f'Invalid ObjectId format: {id}', exc_info=e)
-        raise ValueError('Invalid ObjectId') from e
-
-    query = {'_id': object_id}
-    deleted_count = await MongoUtils.delete_document(collection, query)
-    if deleted_count == 0:
-        logger.warning('No documents were deleted.')
-
+        :return: A list of collection names.
+        """
+        await cls.connect()
+        collections = await cls.db.list_collection_names()
+        logger.debug(f'Collections in database: {collections}')
+        return collections
