@@ -38,7 +38,7 @@ def retrieve_and_process_data(password: str, time: int):
             pd.DataFrame(transactions).to_csv(f'{password}_participants.csv', index=False)
         
         market_base = { company["Nombre"] : company["Valor"] for company in market_base}
-        historial, portafolios = simulate_broker(transactions, market_base)
-        return rank_users(portafolios)
+        current_prices, portafolios = simulate_broker(transactions, market_base)
+        return rank_users(portafolios, current_prices)
     except Exception as e:
         raise e

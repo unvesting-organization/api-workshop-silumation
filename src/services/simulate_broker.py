@@ -68,4 +68,4 @@ def simulate_broker(transactions: List[Transaction], base_prices: Dict[str, floa
                 price_history[stock][date] = current_prices[stock]
     except Exception as e:
         print(f"Error en la simulación: {e}")
-    return price_history, user_portfolios
+    return current_prices, user_portfolios
