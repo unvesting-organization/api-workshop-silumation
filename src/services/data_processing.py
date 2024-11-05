@@ -12,7 +12,6 @@ async def retrieve_and_process_data(password: str, time: int):
 
         # Define user responses
         sheet_id = os.getenv("USER_DECISIONS_DATA")
-
         await MongoUtils.create_collection(f"{password}_portfolios")
         await MongoUtils.create_collection(f"{password}_company_{time}")
 
@@ -46,3 +45,5 @@ async def retrieve_and_process_data(password: str, time: int):
         return ranking
     except Exception as e:
         raise e
+    finally:
+        await MongoUtils.close_connection()

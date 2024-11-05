@@ -141,3 +141,11 @@ class MongoUtils:
         collections = await cls.db.list_collection_names()
         logger.debug(f'Collections in database: {collections}')
         return collections
+    
+    @classmethod
+    async def close_connection(cls):
+        if cls.client:
+            cls.client.close()
+            logger.info('Closed connection to MongoDB')
+        else:
+            logger.warning('No active connection to close')
