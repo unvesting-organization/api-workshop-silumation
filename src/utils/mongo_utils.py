@@ -31,6 +31,29 @@ class MongoUtils:
             except Exception as err:
                 logger.error('Failed to connect to MongoDB', exc_info=err)
                 raise err
+            
+    @classmethod
+    async def create_collection(cls, collection_name: str, **kwargs) -> None:
+        """
+        Creates a new collection in the database with optional configurations.
+
+        :param collection_name: Name of the collection to create.
+        :param kwargs: Optional configurations for the collection (e.g., capped, size, etc.).
+        :raises ValueError: If the collection already exists.
+        """
+        await cls.connect()
+        existing_collections = await cls.db.list_collection_names()
+        if collection_name in existing_collections:
+            logger.warning(f'Collection "{collection_name}" already exists.')
+            raise ValueError(f'Collection "{collection_name}" already exists.')
+
+        try:
+            await cls.db.create_collection(collection_name, **kwargs)
+            logger.info(f'Collection "{collection_name}" created successfully.')
+        except Exception as e:
+            logger.error(f'Failed to create collection "{collection_name}".', exc_info=e)
+            raise e
+
 
     @classmethod
     async def insert_document(cls, collection: str, document: Dict) -> ObjectId:
