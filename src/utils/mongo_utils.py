@@ -1,6 +1,6 @@
 import os
 import logging
-from pymongo import MongoClient
+from pymongo import MongoClient, UpdateOne, errors
 from bson import ObjectId
 from typing import Any, Dict, List, Optional
 from src.helpers.exceptions.mongo_exception import MongoDBException
@@ -112,25 +112,31 @@ class MongoUtils:
             return []
 
     @classmethod
-    async def insert_many_companies(cls, collection: str, companies: List[Dict]) -> List[ObjectId]:
-        """
-        Inserts multiple company documents into the specified collection.
-
-        :param collection: The name of the collection.
-        :param companies: A list of company dictionaries to insert.
-        :return: List of inserted ObjectIds.
-        """
+    async def insert_many_companies(cls, collection: str, companies: List[Dict], exception : str = None) -> List[ObjectId]:
         cls.connect()
         if not companies:
             logger.warning('No companies to insert.')
             return []
 
+        operations = []
+        for company in companies:
+            company_no_valor = {k: v for k, v in company.items() if k != exception}
+            operations.append(
+                UpdateOne(
+                    company_no_valor,
+                    {"$set": {exception: company.get(exception)}},
+                    upsert=True
+                )
+            )
+
         try:
-            result = cls.db[collection].insert_many(companies)
-            logger.debug(f'{len(result.inserted_ids)} companies inserted into "{collection}".')
-            return result.inserted_ids
-        except Exception as e:
-            logger.error('Failed to insert companies.', exc_info=e)
+            result = cls.db[collection].bulk_write(operations)
+            inserted_count = result.upserted_count
+            modified_count = result.modified_count
+            logger.debug(f'{inserted_count} companies inserted and {modified_count} companies updated in "{collection}".')
+            return [op.upserted_id for op in result.upserted_ids] if result.upserted_ids else []
+        except errors.BulkWriteError as e:
+            logger.error('Failed to insert or update companies.', exc_info=e)
             return []
 
     @classmethod

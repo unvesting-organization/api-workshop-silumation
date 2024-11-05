@@ -10,7 +10,7 @@ from src.services.changes_company_shares import changes_shares
 async def retrieve_and_process_data(password: str, time: int):
     try:
         market_base = await companies_data(password, time-1)
-        changes_shares_values = changes_shares(time)
+        changes_shares_values = { company["Nombre"] : company["Cambio"] for company in changes_shares(time-1)}
 
         # Define user responses
         sheet_id = os.getenv("USER_DECISIONS_DATA")
@@ -37,14 +37,14 @@ async def retrieve_and_process_data(password: str, time: int):
                 portfolio = update_portfolio(user, portfolio, date, choices)
                 transactions += portfolio
         
-        market_base_lite = { company["Nombre"] : company["Valor"] + changes_shares_values["Nombre"] for company in market_base}
+        market_base_lite = { company["Nombre"] : company["Valor"] + changes_shares_values[company["Nombre"]] for company in market_base}
 
         current_prices, portafolios = simulate_broker(transactions, market_base_lite)
         await MongoUtils.insert_many_portfolios(f"{password}_portfolios", portafolios)
 
         ranking = rank_users(portafolios, current_prices)
         merged = [{**empresa, 'Valor': current_prices[empresa['Nombre']]} for empresa in market_base]
-        await MongoUtils.insert_many_companies(f"{password}_company_{time}", merged)
+        await MongoUtils.insert_many_companies(f"{password}_company_{time}", merged, "Valor")
         return ranking
     except Exception as e:
         raise e

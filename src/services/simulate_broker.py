@@ -13,9 +13,9 @@ def simulate_broker(transactions: List[Transaction], base_prices: Dict[str, floa
     transactions.sort(key=lambda x: x.date)
     
     # Agrupar transacciones por fecha y símbolo de acción
-    transactions_by_date_stock = defaultdict(lambda: defaultdict(list))
+    transactions_by_date_stock = defaultdict(list)
     for txn in transactions:
-        transactions_by_date_stock[txn.date][txn.stock_symbol].append(txn)
+        transactions_by_date_stock[txn.date].append(txn)
     
     # Inicializar precios actuales con precios base
     current_prices = base_prices.copy()
@@ -29,25 +29,26 @@ def simulate_broker(transactions: List[Transaction], base_prices: Dict[str, floa
     # Simular cambios de precios y gestionar portafolios
     try:
         for date in sorted(transactions_by_date_stock.keys()):
-            for stock, txns in transactions_by_date_stock[date].items():
-                for txn in txns:
+            txns_internal = transactions_by_date_stock[date].copy()
+            for txns in transactions_by_date_stock.values():
+                for txn in transactions_by_date_stock[date]:
                     user = user_portfolios[txn.user_id]
+                    stock = txn.stock_symbol
                     if txn.type == 'buy':
-                        user_txns = [t for t in txns if t.user_id == txn.user_id and t.type == 'buy']
+                        user_txns = [t for t in txns_internal if t.user_id == txn.user_id and t.type == 'buy']
                         num_buys = len(user_txns)
                         allocated_money = user.balance / num_buys if num_buys > 0 else 0
                         # Determinar cuántas acciones se pueden comprar con el dinero asignado
                         price_per_share = current_prices[stock]
-                        shares_to_buy = int(allocated_money // price_per_share)
+                        shares_to_buy = float(allocated_money / price_per_share)
                         if shares_to_buy > 0:
                             total_cost = shares_to_buy * price_per_share
                             user.balance -= total_cost
                             user.holdings[stock] += shares_to_buy
+                            txns_internal.remove(txn)
                             # Actualizar el precio de la acción
                             current_prices[stock] = update_price(current_prices[stock], 'buy', shares_to_buy)
                             print(f"{txn.user_id} compró {shares_to_buy} acciones de {stock} a ${price_per_share:.2f} cada una, costo total: ${total_cost:.2f}")
-                        else:
-                            print(f"{txn.user_id} no pudo comprar acciones de {stock} por falta de fondos.")
                     elif txn.type == 'sell':
                         # Vender todas las acciones que el usuario tiene de este stock
                         shares_to_sell = user.holdings.get(stock, 0)
