@@ -16,10 +16,12 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
+    allow_origins=["*"],  # Allow all origins
     allow_credentials=True,
-    allow_methods=["*"],  # Permitir todos los métodos HTTP (GET, POST, etc.)
-    allow_headers=["*"],  # Permitir todos los encabezados
+    allow_methods=["*"],  # Allow all HTTP methods
+    allow_headers=["*"],  # Allow all headers
 )
+
 app.include_router(broker_router)
 
 if __name__ == "__main__":
