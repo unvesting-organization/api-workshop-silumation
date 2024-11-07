@@ -6,11 +6,31 @@ async def companies_data(key, time):
     if time == 0:
         sheet_id = os.getenv("CHANGES_COMPANY_SHARES_DATA")
         users_responses = pd.read_csv(f"https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=csv&gid=766765566")
-        data_list = users_responses.to_dict(orient='records')
+        current_data = users_responses.to_dict(orient='records')
     else:
         from src.utils.mongo_utils import MongoUtils
-        documentos = await MongoUtils.find_document(f"{key}_company_{time}", {})
-        data_list = [{k: v for k, v in doc.items() if k != '_id'} for doc in documentos]
-    return data_list
+        current_docs = await MongoUtils.find_document(f"{key}_company_{time}", {})
+        current_data = [{k: v for k, v in doc.items() if k != '_id'} for doc in current_docs]
+
+        # Obtener los datos para el tiempo anterior
+        if time == 1:
+            sheet_id = os.getenv("CHANGES_COMPANY_SHARES_DATA")
+            users_responses = pd.read_csv(f"https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=csv&gid=766765566")
+            previous_data = { doc['Nombre']: doc['Valor'] for doc in users_responses.to_dict(orient='records')}
+        else:
+            previous_docs = await MongoUtils.find_document(f"{key}_company_{time-1}", {})
+            previous_data = {doc['Nombre']: doc['Valor'] for doc in previous_docs if 'Nombre' in doc and 'Valor' in doc}
+
+        # Calcular el cambio porcentual y añadirlo a la lista de datos actuales
+        for company in current_data:
+            previous_value = previous_data.get(company['Nombre'], None)
+            if previous_value:
+                current_value = company['Valor']
+                # Calcular el cambio porcentual
+                change_percentage = ((current_value - previous_value) / previous_value) * 100
+                company['Cambio'] = change_percentage
+            else:
+                company['Cambio'] = None  # En caso de no encontrar valor anterior, se asigna None
+    return current_data
 
     
