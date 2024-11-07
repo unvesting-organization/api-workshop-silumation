@@ -51,8 +51,8 @@ async def retrieve_and_process_data(password: str, time: int):
         current_prices =  { name : value + changes_shares_values[name] for name, value in current_prices.items()}
         await MongoUtils.insert_many_portfolios(f"{password}_portfolios_{time}", portafolios_update)
 
-        ranking = rank_users(merge_portfolios(portafolios, portafolios_update), current_prices)
-        
+        ranking = rank_users(portafolios, current_prices)
+        #print
         merged = [{**empresa, 'Valor': current_prices[empresa['Nombre']]} for empresa in market_base]
         await MongoUtils.insert_many_companies(f"{password}_company_{time}", merged, "Valor")
         return ranking
