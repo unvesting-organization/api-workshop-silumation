@@ -14,8 +14,8 @@ def update_price(current_price: float, transaction_type: str, quantity: int,
     Actualiza el precio de la acción basado en el tipo de transacción.
     """
     if transaction_type == 'buy':
-        current_price += ((buy_factor * quantity)/20)
+        current_price += ((buy_factor * quantity)/((500-quantity)/current_price))
     elif transaction_type == 'sell':
-        current_price -= ((sell_factor * quantity)/20)
+        current_price -= ((sell_factor * quantity)/((500-quantity)/current_price))
     # 'hold' no cambia el precio
     return max(current_price, 0)  # Evita precios negativos
