@@ -13,7 +13,7 @@ def rank_users(user_portfolios: Dict[str, UserPortfolio], current_prices: Dict[s
             portfolio.holdings.get(stock, 0) * current_prices.get(stock, 0)
             for stock in portfolio.holdings
         )
-        net_worth = (portfolio.balance + holdings_value)/10
+        net_worth = ((portfolio.balance + holdings_value)/10)-100
         companies_invested = list(portfolio.holdings.keys())
         user_info = {
             'user_id': user_id,
