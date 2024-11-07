@@ -34,8 +34,8 @@ async def video(time : int = Query(...)):
     Get the video link.
     """
     content = {
-        1: "https://www.youtube.com/embed/IGCIX3kLzLw",
-        2: "https://www.youtube.com/embed/XcJt1xey84o",
-        3: "https://www.youtube.com/embed/pzRxqx6uXks"
+        1: '<iframe width="1081" height="556" src="https://www.youtube.com/embed/IGCIX3kLzLw" title="Así se prepara el auténtico Sushi en Japón🇯🇵 | La Capital" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>',
+        2: '<iframe width="1081" height="556" src="https://www.youtube.com/embed/XcJt1xey84o" title="La Picaña Rellena | La Capital" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>',
+        3: '<iframe width="1081" height="556" src="https://www.youtube.com/embed/pzRxqx6uXks" title="Estrenando mi Nuevo Asador con Picañas | La Capital" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>'
     }
     return content[time]
