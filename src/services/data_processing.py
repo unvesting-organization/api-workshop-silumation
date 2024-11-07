@@ -20,7 +20,8 @@ async def retrieve_and_process_data(password: str, time: int):
             
         users_responses = pd.read_csv(f"https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=csv")
         users_responses = users_responses[(users_responses["Contraseña"] == password) & (users_responses["Momento"] == time)]
-
+        # Filter to keep only the oldest entry per user based on 'Marca temporal'
+        users_responses = users_responses.loc[users_responses.groupby('Nombre Usuario')['Marca temporal'].idxmin()]
         portafolios = await MongoUtils.find_document(f"{password}_portfolios_{time-1}", {}) if time > 1 else [{'user_id': user , 'holdings': {}, 'history': {}} for user in users_responses['Nombre Usuario'].unique()]
 
         users_responses.dropna()
@@ -29,11 +30,14 @@ async def retrieve_and_process_data(password: str, time: int):
         transactions = []
         for user in users_responses['Nombre Usuario'].unique():
             user_data = users_responses[users_responses['Nombre Usuario'] == user].sort_values(by='Momento')
-            portfolio = next((dic for dic in portafolios if dic['user_id'] == user), None)
+            portfolio = next((dic for dic in portafolios if dic['user_id'] == user), {'user_id': user , 'holdings': {}, 'history': {}})
 
             for idx, row in user_data.iterrows():
                 date = row['Marca temporal']
-                choices = [row['Empresa a Invertir'], row['Empresa 2 a Invertir']]
+                if time == 1:
+                    choices = [row['Invierte en una empresa'], "Ninguna"]
+                else:
+                    choices = [row['Empresa a Invertir'], row['Empresa 2 a Invertir']]
 
                 # Update holdings based on choices
                 portfolio = update_portfolio(user, portfolio, date, choices)
