@@ -5,7 +5,7 @@ from src.models.transaction import Transaction, update_price
 from src.models.participant_portfolio import UserPortfolio
 
 def simulate_broker(transactions: List[Transaction], base_prices: Dict[str, float],
-                   initial_balance: float = 1000.0) -> (Dict[str, Dict[datetime.date, float]], Dict[str, UserPortfolio]): # type: ignore
+                   initial_balance: float = 800.0) -> (Dict[str, Dict[datetime.date, float]], Dict[str, UserPortfolio]): # type: ignore
     """
     Simula las operaciones del broker actualizando precios y gestionando portafolios de usuarios.
     """
@@ -33,6 +33,7 @@ def simulate_broker(transactions: List[Transaction], base_prices: Dict[str, floa
             for txns in transactions_by_date_stock.values():
                 for txn in transactions_by_date_stock[date]:
                     user = user_portfolios[txn.user_id]
+                    user.balance += 200
                     stock = txn.stock_symbol
                     if txn.type == 'buy':
                         user_txns = [t for t in txns_internal if t.user_id == txn.user_id and t.type == 'buy']
