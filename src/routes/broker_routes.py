@@ -34,8 +34,8 @@ async def video(time : int = Query(...)):
     Get the video link.
     """
     content = {
-        1: '<iframe width="1081" height="556" src="https://www.youtube.com/embed/IGCIX3kLzLw" title="Así se prepara el auténtico Sushi en Japón🇯🇵 | La Capital" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>',
-        2: '<iframe width="1081" height="556" src="https://www.youtube.com/embed/XcJt1xey84o" title="La Picaña Rellena | La Capital" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>',
+        1: '<iframe width="1081" height="556" src="https://www.youtube.com/embed/5mfyeX9Bhnc" title="Simulación de la bolsa - Momento 1" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>',
+        2: '<iframe width="1081" height="556" src="https://www.youtube.com/embed/fJlYxFWXd2A" title="Simulación de la bolsa - Momento 2" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>',
         3: '<iframe width="1081" height="556" src="https://www.youtube.com/embed/pzRxqx6uXks" title="Estrenando mi Nuevo Asador con Picañas | La Capital" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>'
     }
     return content[time]
