@@ -33,7 +33,7 @@ def simulate_broker(transactions: List[Transaction], base_prices: Dict[str, floa
             for txns in transactions_by_date_stock.values():
                 for txn in transactions_by_date_stock[date]:
                     user = user_portfolios[txn.user_id]
-                    user.balance += 200
+                    user.balance += 100
                     stock = txn.stock_symbol
                     if txn.type == 'buy':
                         user_txns = [t for t in txns_internal if t.user_id == txn.user_id and t.type == 'buy']
@@ -45,7 +45,7 @@ def simulate_broker(transactions: List[Transaction], base_prices: Dict[str, floa
                         if shares_to_buy > 0:
                             total_cost = shares_to_buy * price_per_share
                             user.balance -= total_cost
-                            user.holdings[stock] += shares_to_buy
+                            user_portfolios[txn.user_id].holdings[stock] += shares_to_buy
                             txns_internal.remove(txn)
                             # Actualizar el precio de la acción
                             current_prices[stock] = update_price(current_prices[stock], 'buy', shares_to_buy)

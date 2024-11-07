@@ -1,23 +1,21 @@
 from typing import List, Dict
-from src.models.participant_portfolio import UserPortfolio
 
-
-def rank_users(user_portfolios: Dict[str, UserPortfolio], current_prices: Dict[str, float]) -> List[Dict]:
+def rank_users(user_portfolios: Dict[str, Dict], current_prices: Dict[str, float]) -> List[Dict]:
     """
     Ranks users based on their net worth (balance + value of holdings at current prices).
     Returns a list of dictionaries containing user information.
     """
     user_rankings = []
-    for user_id, portfolio in user_portfolios.items():
+    for portfolio in user_portfolios:
         holdings_value = sum(
-            portfolio.holdings.get(stock, 0) * current_prices.get(stock, 0)
-            for stock in portfolio.holdings
+            quantity * current_prices.get(name, 0)
+            for name, quantity in portfolio['holdings'].items()
         )
         money = holdings_value
         net_worth = ((money)/10)-100
-        companies_invested = list(portfolio.holdings.keys())
+        companies_invested = list(portfolio['holdings'].keys())
         user_info = {
-            'user_id': user_id,
+            'user_id': portfolio["user_id"],
             'companies': companies_invested,
             'net_worth':round(net_worth,2),
             'balance': round(money,2),

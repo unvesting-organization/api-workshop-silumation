@@ -5,6 +5,7 @@ from src.services.company_information import companies_data
 from src.services.simulate_broker import simulate_broker
 from src.services.rank_users import rank_users
 from src.utils.mongo_utils import MongoUtils
+from src.utils.merge_portfolio import merge_portfolios
 from src.services.changes_company_shares import changes_shares
 
 async def retrieve_and_process_data(password: str, time: int):
@@ -45,12 +46,12 @@ async def retrieve_and_process_data(password: str, time: int):
         
         market_base_lite = { company["Nombre"] : company["Valor"] + changes_shares_values[company["Nombre"]] for company in market_base}
 
-        current_prices, portafolios = simulate_broker(transactions, market_base_lite)
+        current_prices, portafolios_update = simulate_broker(transactions, market_base_lite)
         changes_shares_values = { company["Nombre"] : company["Cambio"] for company in changes_shares(time)}
         current_prices =  { name : value + changes_shares_values[name] for name, value in current_prices.items()}
-        await MongoUtils.insert_many_portfolios(f"{password}_portfolios_{time}", portafolios)
+        await MongoUtils.insert_many_portfolios(f"{password}_portfolios_{time}", portafolios_update)
 
-        ranking = rank_users(portafolios, current_prices)
+        ranking = rank_users(merge_portfolios(portafolios, portafolios_update), current_prices)
         
         merged = [{**empresa, 'Valor': current_prices[empresa['Nombre']]} for empresa in market_base]
         await MongoUtils.insert_many_companies(f"{password}_company_{time}", merged, "Valor")
