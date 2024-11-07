@@ -34,8 +34,8 @@ async def video(time : int = Query(...)):
     Get the video link.
     """
     content = {
-        1: "https://www.youtube.com/watch?v=1",
-        2: "https://www.youtube.com/watch?v=2",
-        3: "https://www.youtube.com/watch?v=3",
+        1: "https://www.youtube.com/watch?v=pzRxqx6uXks",
+        2: "https://www.youtube.com/watch?v=XcJt1xey84o",
+        3: "https://www.youtube.com/watch?v=IGCIX3kLzLw",
     }
     return content[time]
