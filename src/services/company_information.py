@@ -21,6 +21,7 @@ async def companies_data(key, time):
         else:
             previous_docs = await MongoUtils.find_document(f"{key}_company_{time-1}", {})
             previous_data = {doc['Nombre']: doc['Valor'] for doc in previous_docs if 'Nombre' in doc and 'Valor' in doc}
+            users_responses = { doc['Nombre']: doc['Image'] for doc in previous_docs}
 
         # Calcular el cambio porcentual y añadirlo a la lista de datos actuales
         for company in current_data:
