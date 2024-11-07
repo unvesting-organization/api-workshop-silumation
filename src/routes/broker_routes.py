@@ -36,6 +36,6 @@ async def video(time : int = Query(...)):
     content = {
         1: '<iframe width="1081" height="556" src="https://www.youtube.com/embed/5mfyeX9Bhnc" title="Simulación de la bolsa - Momento 1" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>',
         2: '<iframe width="1081" height="556" src="https://www.youtube.com/embed/fJlYxFWXd2A" title="Simulación de la bolsa - Momento 2" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>',
-        3: '<iframe width="1081" height="556" src="https://www.youtube.com/embed/pzRxqx6uXks" title="Estrenando mi Nuevo Asador con Picañas | La Capital" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>'
+        3: '<iframe width="1081" height="556" src="https://www.youtube.com/embed/_g7hOZPfBxw" title="Simulación de la bolsa - Momento 3" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>'
     }
     return content[time]
