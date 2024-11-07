@@ -13,12 +13,14 @@ def rank_users(user_portfolios: Dict[str, UserPortfolio], current_prices: Dict[s
             portfolio.holdings.get(stock, 0) * current_prices.get(stock, 0)
             for stock in portfolio.holdings
         )
-        net_worth = ((portfolio.balance + holdings_value)/10)-100
+        money = holdings_value
+        net_worth = ((money)/10)-100
         companies_invested = list(portfolio.holdings.keys())
         user_info = {
             'user_id': user_id,
             'companies': companies_invested,
-            'net_worth': net_worth
+            'net_worth': net_worth,
+            'balance': money,
         }
         user_rankings.append(user_info)
     # Sort users by net worth in descending order
