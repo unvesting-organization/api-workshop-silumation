@@ -29,6 +29,7 @@ async def companies_data(key, time):
                 current_value = company['Valor']
                 # Calcular el cambio porcentual
                 change_percentage = ((current_value - previous_value) / previous_value) * 100
+                company['Valor'] = round(company['Valor'],2)
                 company['Cambio'] = round(change_percentage,2)
                 company['Image'] = users_responses[company['Nombre']]
             else:
